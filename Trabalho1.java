@@ -1,4 +1,54 @@
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
 public class Trabalho1 {
+
+    public static int[][] carregarImagem(String caminho) throws IOException {
+        BufferedImage arquivo = ImageIO.read(new File(caminho));
+
+        if (arquivo == null) {
+            throw new IOException("Formato de imagem não suportado: " + caminho);
+        }
+
+        int altura = arquivo.getHeight();
+        int largura = arquivo.getWidth();
+        int[][] imagem = new int[altura][largura];
+
+        for (int y = 0; y < altura; y++) {
+            for (int x = 0; x < largura; x++) {
+                int rgb = arquivo.getRGB(x, y);
+                int vermelho = (rgb >> 16) & 0xFF;
+                int verde = (rgb >> 8) & 0xFF;
+                int azul = rgb & 0xFF;
+
+                // Luminância do pixel: 0 representa preto e 255 representa branco.
+                imagem[y][x] = (int) Math.round(
+                        0.299 * vermelho + 0.587 * verde + 0.114 * azul);
+            }
+        }
+
+        return imagem;
+    }
+
+    public static void salvarImagem(int[][] imagem, String caminho)
+            throws IOException {
+        int altura = imagem.length;
+        int largura = imagem[0].length;
+        BufferedImage arquivo = new BufferedImage(
+                largura, altura, BufferedImage.TYPE_INT_RGB);
+
+        for (int y = 0; y < altura; y++) {
+            for (int x = 0; x < largura; x++) {
+                int cinza = Math.max(0, Math.min(255, imagem[y][x]));
+                int rgb = (cinza << 16) | (cinza << 8) | cinza;
+                arquivo.setRGB(x, y, rgb);
+            }
+        }
+
+        ImageIO.write(arquivo, "png", new File(caminho));
+    }
 
     public static int[][] vizinhoMaisProximo(
             int[][] imagem,
@@ -130,37 +180,46 @@ public class Trabalho1 {
     }
 
     public static void main(String[] args) {
+        String caminhoEntrada = args.length > 0
+                ? args[0]
+                : "PI_Trabalhos/entrada.jpg";
 
-        int[][] imagem = {
-                {1, 2, 3},
-                {4, 5, 6},
-                {7, 8, 9}
-        };
+        try {
+            int[][] imagem = carregarImagem(caminhoEntrada);
 
-        System.out.println("Imagem original:");
-        imprimir(imagem);
+            if (imagem.length < 2 || imagem[0].length < 2) {
+                throw new IllegalArgumentException(
+                        "A imagem precisa ter pelo menos 2x2 pixels.");
+            }
 
-        int[][] ampliada = vizinhoMaisProximo(imagem, 6, 6);
+            File entrada = new File(caminhoEntrada);
+            File pasta = entrada.getAbsoluteFile().getParentFile();
 
-        System.out.println("\nImagem ampliada:");
-        imprimir(ampliada);
+            int[][] vizinhoAmpliada = vizinhoMaisProximo(
+                    imagem, imagem.length * 2, imagem[0].length * 2);
+            int[][] vizinhoReduzida = vizinhoMaisProximo(
+                    imagem, imagem.length / 2, imagem[0].length / 2);
+            int[][] bilinearAmpliada = ampliarBilinear(imagem);
+            int[][] bilinearReduzida = reduzirBilinear(imagem);
 
-        int[][] reduzida = vizinhoMaisProximo(imagem, 2, 2);
+            salvarImagem(imagem,
+                    new File(pasta, "original-cinza.png").getPath());
+            salvarImagem(vizinhoAmpliada,
+                    new File(pasta, "vizinho-ampliada.png").getPath());
+            salvarImagem(vizinhoReduzida,
+                    new File(pasta, "vizinho-reduzida.png").getPath());
+            salvarImagem(bilinearAmpliada,
+                    new File(pasta, "bilinear-ampliada.png").getPath());
+            salvarImagem(bilinearReduzida,
+                    new File(pasta, "bilinear-reduzida.png").getPath());
 
-        System.out.println("\nImagem reduzida:");
-        imprimir(reduzida);
-
-        System.out.println("\nBilinear - Ampliação:");
-        int[][] bilinearAmpliada =
-                ampliarBilinear(imagem);
-
-        imprimir(bilinearAmpliada);
-
-
-        System.out.println("\nBilinear - Redução:");
-        int[][] bilinearReduzida =
-                reduzirBilinear(imagem);
-        imprimir(bilinearReduzida);
-
+            System.out.println("Imagem carregada: "
+                    + imagem[0].length + "x" + imagem.length + " pixels");
+            System.out.println("Resultados salvos em: " + pasta.getPath());
+        } catch (IOException | IllegalArgumentException erro) {
+            System.err.println("Erro: " + erro.getMessage());
+            System.err.println("Informe uma imagem JPG ou PNG. Exemplo:");
+            System.err.println("java -cp PI_Trabalhos Trabalho1 caminho/imagem.jpg");
+        }
     }
 }
