@@ -78,7 +78,6 @@ public class Trabalho1 {
                 resultado[y][x] = imagem[origemY][origemX];
             }
         }
-
         return resultado;
     }
 
@@ -113,7 +112,6 @@ public class Trabalho1 {
     }
 
     public static int[][] ampliarBilinear(int[][] imagem) {
-
         int altura = imagem.length;
         int largura = imagem[0].length;
         int novaAltura = altura * 2 - 1;
@@ -122,14 +120,12 @@ public class Trabalho1 {
         int[][] resultado = new int[novaAltura][novaLargura];
 
         for (int y = 0; y < altura; y++) {
-
             for (int x = 0; x < largura; x++) {
 
                 resultado[y * 2][x * 2] = imagem[y][x];
             }
         }
         for (int y = 0; y < altura; y++) {
-
             for (int x = 0; x < largura - 1; x++) {
 
                 int esquerda = imagem[y][x];
@@ -140,7 +136,6 @@ public class Trabalho1 {
             }
         }
         for (int y = 0; y < altura - 1; y++) {
-
             for (int x = 0; x < largura; x++) {
 
                 int cima = imagem[y][x];
@@ -151,7 +146,6 @@ public class Trabalho1 {
             }
         }
         for (int y = 0; y < altura - 1; y++) {
-
             for (int x = 0; x < largura - 1; x++) {
 
                 int p1 = imagem[y][x];
@@ -163,18 +157,14 @@ public class Trabalho1 {
                         = (p1 + p2 + p3 + p4) / 4;
             }
         }
-
         return resultado;
     }
 
     public static void imprimir(int[][] imagem) {
-
         for (int i = 0; i < imagem.length; i++) {
-
             for (int j = 0; j < imagem[i].length; j++) {
                 System.out.print(imagem[i][j] + "\t");
             }
-
             System.out.println();
         }
     }
@@ -192,8 +182,13 @@ public class Trabalho1 {
                         "A imagem precisa ter pelo menos 2x2 pixels.");
             }
 
-            File entrada = new File(caminhoEntrada);
-            File pasta = entrada.getAbsoluteFile().getParentFile();
+            File pastaRaizProjeto = new File(System.getProperty("user.dir"));
+            File pastaAlteradas = new File(pastaRaizProjeto, "alteradas");
+
+            if (!pastaAlteradas.exists() && !pastaAlteradas.mkdirs()) {
+                throw new IOException("Nao foi possivel criar a pasta: "
+                        + pastaAlteradas.getPath());
+            }
 
             int[][] vizinhoAmpliada = vizinhoMaisProximo(
                     imagem, imagem.length * 2, imagem[0].length * 2);
@@ -202,20 +197,18 @@ public class Trabalho1 {
             int[][] bilinearAmpliada = ampliarBilinear(imagem);
             int[][] bilinearReduzida = reduzirBilinear(imagem);
 
-            salvarImagem(imagem,
-                    new File(pasta, "original-cinza.png").getPath());
             salvarImagem(vizinhoAmpliada,
-                    new File(pasta, "vizinho-ampliada.png").getPath());
+                    new File(pastaAlteradas, "vizinho-ampliada.png").getPath());
             salvarImagem(vizinhoReduzida,
-                    new File(pasta, "vizinho-reduzida.png").getPath());
+                    new File(pastaAlteradas, "vizinho-reduzida.png").getPath());
             salvarImagem(bilinearAmpliada,
-                    new File(pasta, "bilinear-ampliada.png").getPath());
+                    new File(pastaAlteradas, "bilinear-ampliada.png").getPath());
             salvarImagem(bilinearReduzida,
-                    new File(pasta, "bilinear-reduzida.png").getPath());
+                    new File(pastaAlteradas, "bilinear-reduzida.png").getPath());
 
             System.out.println("Imagem carregada: "
                     + imagem[0].length + "x" + imagem.length + " pixels");
-            System.out.println("Resultados salvos em: " + pasta.getPath());
+            System.out.println("Alteradas em: " + pastaAlteradas.getPath());
         } catch (IOException | IllegalArgumentException erro) {
             System.err.println("Erro: " + erro.getMessage());
             System.err.println("Informe uma imagem JPG ou PNG. Exemplo:");
