@@ -170,24 +170,27 @@ public class Trabalho1 {
     }
 
     public static void main(String[] args) {
-        String caminhoEntrada = args.length > 0
-                ? args[0]
-                : "PI_Trabalhos/entrada.jpg";
-
         try {
-            int[][] imagem = carregarImagem(caminhoEntrada);
+            File pastaProjeto = new File(".");
+            File pastaOriginais = new File(pastaProjeto, "originais");
+            File pastaAlteradas = new File(pastaProjeto, "alteradas");
+
+            if (!pastaOriginais.isDirectory() || !pastaAlteradas.isDirectory()) {
+            throw new IOException(
+                        "As pastas originais e alteradas devem existir dentro de PI_Trabalhos.");
+            }
+
+            if (args.length == 0) {
+            throw new IllegalArgumentException(
+                        "Informe o nome da imagem que esta em originais.");
+            }
+
+            File entrada = new File(pastaOriginais, args[0]);
+            int[][] imagem = carregarImagem(entrada.getPath());
 
             if (imagem.length < 2 || imagem[0].length < 2) {
                 throw new IllegalArgumentException(
                         "A imagem precisa ter pelo menos 2x2 pixels.");
-            }
-
-            File pastaRaizProjeto = new File(System.getProperty("user.dir"));
-            File pastaAlteradas = new File(pastaRaizProjeto, "alteradas");
-
-            if (!pastaAlteradas.exists() && !pastaAlteradas.mkdirs()) {
-                throw new IOException("Nao foi possivel criar a pasta: "
-                        + pastaAlteradas.getPath());
             }
 
             int[][] vizinhoAmpliada = vizinhoMaisProximo(
@@ -212,7 +215,7 @@ public class Trabalho1 {
         } catch (IOException | IllegalArgumentException erro) {
             System.err.println("Erro: " + erro.getMessage());
             System.err.println("Informe uma imagem JPG ou PNG. Exemplo:");
-            System.err.println("java -cp PI_Trabalhos Trabalho1 caminho/imagem.jpg");
+            System.err.println("java Trabalho1 nome-da-imagem.jpg");
         }
     }
 }
