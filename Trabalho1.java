@@ -1,53 +1,53 @@
-import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import javax.imageio.ImageIO;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 
 public class Trabalho1 {
 
     public static int[][] carregarImagem(String caminho) throws IOException {
-        BufferedImage arquivo = ImageIO.read(new File(caminho));
-
-        if (arquivo == null) {
-            throw new IOException("Formato de imagem não suportado: " + caminho);
-        }
-
-        int altura = arquivo.getHeight();
-        int largura = arquivo.getWidth();
-        int[][] imagem = new int[altura][largura];
-
-        for (int y = 0; y < altura; y++) {
-            for (int x = 0; x < largura; x++) {
-                int rgb = arquivo.getRGB(x, y);
-                int vermelho = (rgb >> 16) & 0xFF;
-                int verde = (rgb >> 8) & 0xFF;
-                int azul = rgb & 0xFF;
-
-                // Luminância do pixel: 0 representa preto e 255 representa branco.
-                imagem[y][x] = (int) Math.round(
-                        0.299 * vermelho + 0.587 * verde + 0.114 * azul);
+        try (Scanner entrada = new Scanner(
+                new BufferedInputStream(new FileInputStream(caminho)),
+                StandardCharsets.US_ASCII)) {
+            if (!"P2".equals(proximoToken(entrada))) {
+                throw new IOException("O arquivo precisa estar no formato PGM P2.");
             }
-        }
 
-        return imagem;
+            int largura = Integer.parseInt(proximoToken(entrada));
+            int altura = Integer.parseInt(proximoToken(entrada));
+            int valorMaximo = Integer.parseInt(proximoToken(entrada));
+
+            if (largura < 1 || altura < 1 || valorMaximo < 1) {
+                throw new IOException("Cabecalho PGM invalido.");
+            }
+
+            int[][] imagem = new int[altura][largura];
+            for (int y = 0; y < altura; y++) {
+                for (int x = 0; x < largura; x++) {
+                    int pixel = Integer.parseInt(proximoToken(entrada));
+                    imagem[y][x] = pixel * 255 / valorMaximo;
+                }
+            }
+            return imagem;
+        } catch (NumberFormatException erro) {
+            throw new IOException("Valores invalidos no arquivo PGM.", erro);
+        }
     }
 
-    public static void salvarImagem(int[][] imagem, String caminho)
-            throws IOException {
-        int altura = imagem.length;
-        int largura = imagem[0].length;
-        BufferedImage arquivo = new BufferedImage(
-                largura, altura, BufferedImage.TYPE_INT_RGB);
-
-        for (int y = 0; y < altura; y++) {
-            for (int x = 0; x < largura; x++) {
-                int cinza = Math.max(0, Math.min(255, imagem[y][x]));
-                int rgb = (cinza << 16) | (cinza << 8) | cinza;
-                arquivo.setRGB(x, y, rgb);
+    private static String proximoToken(Scanner entrada) throws IOException {
+        while (entrada.hasNext()) {
+            String token = entrada.next();
+            if (token.startsWith("#")) {
+                if (entrada.hasNextLine()) {
+                    entrada.nextLine();
+                }
+                continue;
             }
+            return token;
         }
-
-        ImageIO.write(arquivo, "png", new File(caminho));
+        throw new IOException("Arquivo PGM incompleto.");
     }
 
     public static int[][] vizinhoMaisProximo(
@@ -83,10 +83,10 @@ public class Trabalho1 {
 
 
     public static int[][] reduzirBilinear(int[][] imagem) {
-
         int altura = imagem.length;
         int largura = imagem[0].length;
 
+        // Redução da imagem pela metade
         int novaAltura = altura / 2;
         int novaLargura = largura / 2;
 
@@ -96,9 +96,11 @@ public class Trabalho1 {
 
             for (int x = 0; x < novaLargura; x++) {
 
+                // Cada pixel de saída, seleciona bloco 2x2 da imagem original
                 int origemY = y * 2;
                 int origemX = x * 2;
 
+                // Obtem os 4 pixels para calcular a média
                 int p1 = imagem[origemY][origemX];
                 int p2 = imagem[origemY][origemX + 1];
                 int p3 = imagem[origemY + 1][origemX];
@@ -114,17 +116,22 @@ public class Trabalho1 {
     public static int[][] ampliarBilinear(int[][] imagem) {
         int altura = imagem.length;
         int largura = imagem[0].length;
+
+        // Dimensão da nova imagem
+        // Inserção de pixel entre os pixels originais, sem duplicar a ultima coluna e ultima linha
         int novaAltura = altura * 2 - 1;
         int novaLargura = largura * 2 - 1;
 
         int[][] resultado = new int[novaAltura][novaLargura];
 
+        // Preservação dos pixels originais nas posições pares na nova matriz
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
 
                 resultado[y * 2][x * 2] = imagem[y][x];
             }
         }
+        // Interpolação horizontal: media entre dois pixels vizinhos na mesma linha
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura - 1; x++) {
 
@@ -135,6 +142,7 @@ public class Trabalho1 {
                         = (esquerda + direita) / 2;
             }
         }
+        // Interpolação vertical: media entre dois pixels vizinhos na mesma coluna
         for (int y = 0; y < altura - 1; y++) {
             for (int x = 0; x < largura; x++) {
 
@@ -145,6 +153,7 @@ public class Trabalho1 {
                         = (cima + baixo) / 2;
             }
         }
+        // Interpolação diagonal: media entre quatro pixels vizinhos
         for (int y = 0; y < altura - 1; y++) {
             for (int x = 0; x < largura - 1; x++) {
 
@@ -161,9 +170,9 @@ public class Trabalho1 {
     }
 
     public static void imprimir(int[][] imagem) {
-        for (int i = 0; i < imagem.length; i++) {
-            for (int j = 0; j < imagem[i].length; j++) {
-                System.out.print(imagem[i][j] + "\t");
+        for (int[] linha : imagem) {
+            for (int pixel : linha) {
+                System.out.printf("%4d", pixel);
             }
             System.out.println();
         }
@@ -172,17 +181,16 @@ public class Trabalho1 {
     public static void main(String[] args) {
         try {
             File pastaProjeto = new File(".");
-            File pastaOriginais = new File(pastaProjeto, "originais");
-            File pastaAlteradas = new File(pastaProjeto, "alteradas");
+            File pastaOriginais = new File(pastaProjeto, "testes");
 
-            if (!pastaOriginais.isDirectory() || !pastaAlteradas.isDirectory()) {
+            if (!pastaOriginais.isDirectory()) {
             throw new IOException(
-                        "As pastas originais e alteradas devem existir dentro de PI_Trabalhos.");
+                        "A pasta testes deve existir dentro de PI_Trabalhos.");
             }
 
             if (args.length == 0) {
             throw new IllegalArgumentException(
-                        "Informe o nome da imagem que esta em originais.");
+                        "Informe o nome da imagem que esta em testes.");
             }
 
             File entrada = new File(pastaOriginais, args[0]);
@@ -200,22 +208,20 @@ public class Trabalho1 {
             int[][] bilinearAmpliada = ampliarBilinear(imagem);
             int[][] bilinearReduzida = reduzirBilinear(imagem);
 
-            salvarImagem(vizinhoAmpliada,
-                    new File(pastaAlteradas, "vizinho-ampliada.png").getPath());
-            salvarImagem(vizinhoReduzida,
-                    new File(pastaAlteradas, "vizinho-reduzida.png").getPath());
-            salvarImagem(bilinearAmpliada,
-                    new File(pastaAlteradas, "bilinear-ampliada.png").getPath());
-            salvarImagem(bilinearReduzida,
-                    new File(pastaAlteradas, "bilinear-reduzida.png").getPath());
-
             System.out.println("Imagem carregada: "
                     + imagem[0].length + "x" + imagem.length + " pixels");
-            System.out.println("Alteradas em: " + pastaAlteradas.getPath());
+                System.out.println("\nVizinho mais proximo - ampliacao:");
+                imprimir(vizinhoAmpliada);
+                System.out.println("\nVizinho mais proximo - reducao:");
+                imprimir(vizinhoReduzida);
+                System.out.println("\nInterpolacao bilinear - ampliacao:");
+                imprimir(bilinearAmpliada);
+                System.out.println("\nInterpolacao bilinear - reducao:");
+                imprimir(bilinearReduzida);
         } catch (IOException | IllegalArgumentException erro) {
             System.err.println("Erro: " + erro.getMessage());
-            System.err.println("Informe uma imagem JPG ou PNG. Exemplo:");
-            System.err.println("java Trabalho1 nome-da-imagem.jpg");
+            System.err.println("Informe uma imagem PGM no formato P2. Exemplo:");
+            System.err.println("java Trabalho1 nome-da-imagem.pgm");
         }
     }
 }
