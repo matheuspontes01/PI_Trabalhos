@@ -5,6 +5,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+// Algoritmos de vizinho mais próximo e interpolação bilinear (ampliação e redução) com imagens PGM (P2).
+// Feitos pelos alunos: Matheus Silva Pontes & Lucas Monteiro de Carvalho
+
+// Execute no terminal os seguintes comandos:
+// javac Trabalho1.java
+// java Trabalho1 teste.pgm
+
 public class Trabalho1 {
 
     public static int[][] carregarImagem(String caminho) throws IOException {
