@@ -182,7 +182,7 @@ public class Trabalho2 {
                     int vy = y + deslocamento[0];
                     int vx = x + deslocamento[1];
 
-                    if (vy < 0 || vx < 0 || vx >= largura) {
+                    if (vy < 0 || vy >= altura || vx < 0 || vx >= largura) {
                         continue;
                     }
 
