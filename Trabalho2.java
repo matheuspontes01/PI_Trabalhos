@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-// Algoritmo de rotulacao (labelling) de componentes conexas em imagens
-// binarias, com leitura de imagens PGM (P2).
-// Feito pelos alunos: Matheus Silva Pontes & Lucas Monteiro de Carvalho
+// Rotulacao de componentes conexas em imagem binaria.
+// Le e processa imagens PGM (P2) e identifica regioes conectadas.
+// Feito por: Matheus Silva Pontes & Lucas Monteiro de Carvalho
 
-// Execute no terminal os seguintes comandos:
+// Execucao:
 // javac Trabalho2.java
 // java Trabalho2 teste.pgm
 
@@ -62,12 +62,8 @@ public class Trabalho2 {
         throw new IOException("Arquivo PGM incompleto.");
     }
 
-    // ---------------------------------------------------------------
-    // Binarizacao: Para todo pixel da imagem f
-    //              Se f(x,y) < limiar entao f'(x,y) = 0
-    //              senao f'(x,y) = 255
-    // ---------------------------------------------------------------
-
+    // Converte a imagem em binaria usando um limiar.
+    // Pixel abaixo do limiar vira 0 (fundo); acima vira 255 (objeto).
     public static int[][] binarizar(int[][] imagem, int limiar) {
         int altura = imagem.length;
         int largura = imagem[0].length;
@@ -82,25 +78,18 @@ public class Trabalho2 {
         return resultado;
     }
 
-    // ---------------------------------------------------------------
-    // Estrutura de conjuntos disjuntos (union-find), usada para
-    // controlar quais rotulos sao equivalentes durante a varredura,
-    // conforme o passo 3 do algoritmo: "Troca-se cada label pelo seu
-    // equivalente".
-    // ---------------------------------------------------------------
-
+    // Union-Find: guarda quais rotulos pertencem ao mesmo objeto.
     private static class ConjuntoDeRotulos {
         private final List<Integer> pai = new ArrayList<>();
 
-        // Cria um novo rotulo, inicialmente equivalente a ele mesmo.
+        // Cria um novo rotulo e o considera como conjunto isolado.
         int novoRotulo() {
             int rotulo = pai.size() + 1;
             pai.add(rotulo);
             return rotulo;
         }
 
-        // Encontra o rotulo representante (raiz) de um rotulo, com
-        // compressao de caminho.
+        // Retorna o representante do conjunto do rotulo.
         int encontrar(int rotulo) {
             int raiz = rotulo;
             while (pai.get(raiz - 1) != raiz) {
@@ -114,8 +103,7 @@ public class Trabalho2 {
             return raiz;
         }
 
-        // Anota que dois rotulos sao equivalentes, unindo-os pelo
-        // menor valor (menor rotulo "ganha").
+        // Une dois rotulos em um mesmo conjunto.
         void unir(int rotuloA, int rotuloB) {
             int raizA = encontrar(rotuloA);
             int raizB = encontrar(rotuloB);
@@ -130,26 +118,9 @@ public class Trabalho2 {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Algoritmo de rotulacao propriamente dito.
-    //
-    // Varredura pixel a pixel, da esquerda para a direita e de cima
-    // para baixo. Para o pixel p em estudo:
-    //   1- Se p nao pertence ao objeto (fundo), passa para o proximo.
-    //   2- Se p pertence ao objeto, observam-se os vizinhos ja
-    //      visitados (r = esquerda, s = acima, e tambem as diagonais
-    //      superiores quando conectividade = 8):
-    //      2.1- Se todos os vizinhos ja rotulados forem fundo,
-    //           atribui-se um novo rotulo a p.
-    //      2.2- Se exatamente um rotulo aparecer entre os vizinhos,
-    //           esse rotulo e atribuido a p.
-    //      2.3- Se mais de um rotulo distinto aparecer entre os
-    //           vizinhos, atribui-se o menor deles a p e anota-se que
-    //           os demais sao equivalentes a ele.
-    //   3- Ao final da varredura, troca-se cada rotulo pelo seu
-    //      equivalente (representante do conjunto).
-    // ---------------------------------------------------------------
-
+    // Percorre a imagem e atribui rotulos aos pixels do objeto.
+    // A ideia principal: olhar os vizinhos ja processados e decidir:
+    // criar novo rotulo, reaproveitar um existente ou unir rotulos equivalentes.
     public static int[][] rotular(int[][] imagemBinaria, int valorObjeto, int conectividade) {
         if (conectividade != 4 && conectividade != 8) {
             throw new IllegalArgumentException("Conectividade deve ser 4 ou 8.");
@@ -158,12 +129,11 @@ public class Trabalho2 {
         int altura = imagemBinaria.length;
         int largura = imagemBinaria[0].length;
 
+        // Matriz de saida: 0 significa fundo; valores > 0 sao rotulos.
         int[][] rotulos = new int[altura][largura];
         ConjuntoDeRotulos rotulosEquivalentes = new ConjuntoDeRotulos();
 
-        // Deslocamentos (dy, dx) dos vizinhos ja visitados na varredura.
-        // 4-conectividade: s (acima) e r (esquerda).
-        // 8-conectividade: acrescenta as duas diagonais superiores.
+        // Vizinhos analisados na varredura.
         int[][] vizinhanca4 = { {-1, 0}, {0, -1} };
         int[][] vizinhanca8 = { {-1, -1}, {-1, 0}, {-1, 1}, {0, -1} };
         int[][] vizinhanca = (conectividade == 4) ? vizinhanca4 : vizinhanca8;
@@ -171,12 +141,12 @@ public class Trabalho2 {
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
 
-                // 1- Se p nao pertence ao objeto, move-se para o proximo pixel.
+                // Ignora fundo.
                 if (imagemBinaria[y][x] != valorObjeto) {
                     continue;
                 }
 
-                // 2- Se p pertence ao objeto, analisam-se os vizinhos ja rotulados.
+                // Guarda o menor rótulo encontrado entre os vizinhos processados.
                 int menorRotuloVizinho = Integer.MAX_VALUE;
                 for (int[] deslocamento : vizinhanca) {
                     int vy = y + deslocamento[0];
@@ -194,23 +164,24 @@ public class Trabalho2 {
                     if (rotuloVizinho < menorRotuloVizinho) {
                         menorRotuloVizinho = rotuloVizinho;
                     }
-                    // 2.3- Se ha mais de um rotulo distinto entre os vizinhos,
-                    // anota-se que eles sao equivalentes.
+
+                    // Se ja existia rotulo no pixel atual e o vizinho tambem tinha outro, une os conjuntos.
                     if (rotulos[y][x] != 0) {
                         rotulosEquivalentes.unir(rotulos[y][x], rotuloVizinho);
                     }
+
+                    // Atribui o menor rotulo encontrado por enquanto.
                     rotulos[y][x] = menorRotuloVizinho;
                 }
 
-                // 2.1- Nenhum vizinho rotulado: assinala-se um novo label.
+                // Se nenhum vizinho tinha rotulo, cria um novo.
                 if (rotulos[y][x] == 0) {
                     rotulos[y][x] = rotulosEquivalentes.novoRotulo();
                 }
-                // 2.2/2.3 ja tratados no laco acima (rotulo minimo + equivalencias).
             }
         }
 
-        // 3- Troca-se cada rotulo pelo seu equivalente (representante).
+        // Resolve todas as equivalencias e deixa cada componente com um representante unico.
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
                 if (rotulos[y][x] != 0) {
@@ -222,9 +193,7 @@ public class Trabalho2 {
         return comprimirRotulos(rotulos);
     }
 
-    // Renumera os rotulos finais para uma sequencia 1, 2, 3, ... na
-    // ordem em que aparecem na varredura, deixando o resultado mais
-    // legivel (equivalente ao "Rotulo" da tabela mostrada em aula).
+    // Reorganiza os rotulos finais para ficar em sequencia 1, 2, 3, ...
     private static int[][] comprimirRotulos(int[][] rotulos) {
         int altura = rotulos.length;
         int largura = rotulos[0].length;
@@ -249,12 +218,7 @@ public class Trabalho2 {
         return resultado;
     }
 
-    // ---------------------------------------------------------------
-    // Estatisticas por componente: rotulo, area (em pixels) e
-    // centroide (X, Y), no mesmo espirito da tabela "Rotulo / Area /
-    // X / Y" apresentada em aula.
-    // ---------------------------------------------------------------
-
+    // Guarda area e centro de cada componente rotulada.
     private static class Componente {
         int rotulo;
         int area;
@@ -270,6 +234,7 @@ public class Trabalho2 {
         }
     }
 
+    // Soma os pixels de cada rotulo para obter area e centroide.
     public static List<Componente> calcularEstatisticas(int[][] rotulos) {
         Map<Integer, Componente> componentes = new LinkedHashMap<>();
 
@@ -293,10 +258,7 @@ public class Trabalho2 {
         return new ArrayList<>(componentes.values());
     }
 
-    // ---------------------------------------------------------------
-    // Impressao
-    // ---------------------------------------------------------------
-
+    // Imprime uma matriz em formato tabular.
     public static void imprimir(int[][] matriz) {
         for (int[] linha : matriz) {
             for (int valor : linha) {
@@ -306,6 +268,7 @@ public class Trabalho2 {
         }
     }
 
+    // Exibe rotulo, area e centroide de cada componente.
     public static void imprimirEstatisticas(List<Componente> componentes) {
         System.out.printf("%-8s%-8s%-8s%-8s%n", "Rotulo", "Area", "X", "Y");
         for (Componente componente : componentes) {
@@ -316,10 +279,6 @@ public class Trabalho2 {
                     componente.centroY());
         }
     }
-
-    // ---------------------------------------------------------------
-    // main
-    // ---------------------------------------------------------------
 
     public static void main(String[] args) {
         try {
@@ -344,8 +303,6 @@ public class Trabalho2 {
                         "A imagem precisa ter pelo menos 2x2 pixels.");
             }
 
-            // Considera-se que a imagem ja esta (ou sera) binarizada,
-            // com objetos representados pelo valor 255.
             int[][] imagemBinaria = binarizar(imagem, 127);
 
             int[][] rotulos4 = rotular(imagemBinaria, 255, 4);
