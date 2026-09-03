@@ -18,7 +18,7 @@ import java.util.Scanner;
 // java Trabalho2 teste.pgm
 
 public class Trabalho2 {
-
+    //Funcao para ler a imagem no formato PGM.
     public static int[][] carregarImagem(String caminho) throws IOException {
         try (Scanner entrada = new Scanner(
                 new BufferedInputStream(new FileInputStream(caminho)),
@@ -31,10 +31,14 @@ public class Trabalho2 {
             int altura = Integer.parseInt(proximoToken(entrada));
             int valorMaximo = Integer.parseInt(proximoToken(entrada));
 
+
+            //Faz uma unica verificao se os valores de altura ,largura e valor maximo estao validos.
             if (largura < 1 || altura < 1 || valorMaximo < 1) {
                 throw new IOException("Cabecalho PGM invalido.");
             }
 
+
+            //Preenche a matriz com os valores lidos do arquivo.
             int[][] imagem = new int[altura][largura];
             for (int y = 0; y < altura; y++) {
                 for (int x = 0; x < largura; x++) {
@@ -51,6 +55,7 @@ public class Trabalho2 {
     private static String proximoToken(Scanner entrada) throws IOException {
         while (entrada.hasNext()) {
             String token = entrada.next();
+            //Verifica se o arquivo comeca com comentarios.
             if (token.startsWith("#")) {
                 if (entrada.hasNextLine()) {
                     entrada.nextLine();
@@ -70,6 +75,7 @@ public class Trabalho2 {
 
         int[][] resultado = new int[altura][largura];
 
+        //Percorre toda a matriz e troca os valores menores que 127 para 0 e maiores que 127 para 255
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
                 resultado[y][x] = (imagem[y][x] < limiar) ? 0 : 255;
@@ -77,13 +83,13 @@ public class Trabalho2 {
         }
         return resultado;
     }
-
     // Union-Find: guarda quais rotulos pertencem ao mesmo objeto.
     private static class ConjuntoDeRotulos {
         private final List<Integer> pai = new ArrayList<>();
 
         // Cria um novo rotulo e o considera como conjunto isolado.
         int novoRotulo() {
+            //Verifica quantos elementos possui na lista e cria um novo rotulo
             int rotulo = pai.size() + 1;
             pai.add(rotulo);
             return rotulo;
@@ -92,9 +98,16 @@ public class Trabalho2 {
         // Retorna o representante do conjunto do rotulo.
         int encontrar(int rotulo) {
             int raiz = rotulo;
+
+            //Verifica se o rotulo atual e diferente do pai
             while (pai.get(raiz - 1) != raiz) {
+                //Se for ,procura o pai
                 raiz = pai.get(raiz - 1);
             }
+
+            /* Faz uma otimizacao do metodo anterior,fazemos o rotulo
+            apontar diretamente para a raiz ,fazendo com que proximas buscas sejam quase imediatas
+               */
             while (pai.get(rotulo - 1) != raiz) {
                 int proximo = pai.get(rotulo - 1);
                 pai.set(rotulo - 1, raiz);
@@ -102,14 +115,15 @@ public class Trabalho2 {
             }
             return raiz;
         }
-
         // Une dois rotulos em um mesmo conjunto.
         void unir(int rotuloA, int rotuloB) {
+            //Chamamos a funcao encontrar pra unir os rotulos
             int raizA = encontrar(rotuloA);
             int raizB = encontrar(rotuloB);
             if (raizA == raizB) {
                 return;
             }
+            //Sempre usamos o menor label
             if (raizA < raizB) {
                 pai.set(raizB - 1, raizA);
             } else {
@@ -117,7 +131,6 @@ public class Trabalho2 {
             }
         }
     }
-
     // Percorre a imagem e atribui rotulos aos pixels do objeto.
     // A ideia principal: olhar os vizinhos ja processados e decidir:
     // criar novo rotulo, reaproveitar um existente ou unir rotulos equivalentes.
@@ -218,7 +231,7 @@ public class Trabalho2 {
         return resultado;
     }
 
-    // Guarda area e centro de cada componente rotulada.
+// Guarda area e centro de cada componente rotulada.
     private static class Componente {
         int rotulo;
         int area;
@@ -257,6 +270,8 @@ public class Trabalho2 {
         }
         return new ArrayList<>(componentes.values());
     }
+
+
 
     // Imprime uma matriz em formato tabular.
     public static void imprimir(int[][] matriz) {
