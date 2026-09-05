@@ -67,7 +67,7 @@ public class Trabalho2 {
         throw new IOException("Arquivo PGM incompleto.");
     }
 
-    // Converte a imagem em binaria usando um limiar.
+    // Converte a imagem em binaria usando um limiar, o limiar e 127.
     // Pixel abaixo do limiar vira 0 (fundo); acima vira 255 (objeto).
     public static int[][] binarizar(int[][] imagem, int limiar) {
         int altura = imagem.length;
@@ -85,6 +85,8 @@ public class Trabalho2 {
     }
     // Union-Find: guarda quais rotulos pertencem ao mesmo objeto.
     private static class ConjuntoDeRotulos {
+
+        //Lista de rotulos
         private final List<Integer> pai = new ArrayList<>();
 
         // Cria um novo rotulo e o considera como conjunto isolado.
@@ -94,11 +96,9 @@ public class Trabalho2 {
             pai.add(rotulo);
             return rotulo;
         }
-
         // Retorna o representante do conjunto do rotulo.
         int encontrar(int rotulo) {
             int raiz = rotulo;
-
             //Verifica se o rotulo atual e diferente do pai
             while (pai.get(raiz - 1) != raiz) {
                 //Se for ,procura o pai
@@ -108,11 +108,7 @@ public class Trabalho2 {
             /* Faz uma otimizacao do metodo anterior,fazemos o rotulo
             apontar diretamente para a raiz ,fazendo com que proximas buscas sejam quase imediatas
                */
-            while (pai.get(rotulo - 1) != raiz) {
-                int proximo = pai.get(rotulo - 1);
-                pai.set(rotulo - 1, raiz);
-                rotulo = proximo;
-            }
+                
             return raiz;
         }
         // Une dois rotulos em um mesmo conjunto.

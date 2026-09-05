@@ -1,44 +1,16 @@
-"""Adicao e multiplicacao pixel a pixel em imagens PGM P2."""
+"""Adicao, multiplicacao e espelhamento pixel a pixel em imagens PNG."""
 
 import argparse
+from PIL import Image
 
 
 MAX_PIXEL = 255
 
 
-def ler_tokens(caminho):
-	with open(caminho, "r", encoding="ascii") as arquivo:
-		for linha in arquivo:
-			linha_sem_comentario = linha.split("#", 1)[0]
-			yield from linha_sem_comentario.split()
-
-
-def ler_pgm(caminho):
-	tokens = iter(ler_tokens(caminho))
-	try:
-		formato = next(tokens)
-		largura = int(next(tokens))
-		altura = int(next(tokens))
-		valor_maximo = int(next(tokens))
-	except (StopIteration, ValueError) as erro:
-		raise ValueError("Arquivo PGM invalido ou incompleto.") from erro
-
-	if formato != "P2":
-		raise ValueError("O arquivo precisa estar no formato PGM P2.")
-	if largura <= 0 or altura <= 0 or valor_maximo <= 0:
-		raise ValueError("Cabecalho PGM invalido.")
-
-	pixels = []
-	for _ in range(largura * altura):
-		try:
-			pixel = int(next(tokens))
-		except (StopIteration, ValueError) as erro:
-			raise ValueError("Arquivo PGM incompleto ou com pixel invalido.") from erro
-
-		if not 0 <= pixel <= valor_maximo:
-			raise ValueError("Pixel fora do intervalo informado no PGM.")
-		pixels.append(round(pixel * MAX_PIXEL / valor_maximo))
-
+def ler_imagem(caminho):
+	imagem = Image.open(caminho).convert("L")
+	largura, altura = imagem.size
+	pixels = list(imagem.getdata())
 	return largura, altura, pixels
 
 
@@ -63,6 +35,27 @@ def multiplicar(imagem_a, imagem_b):
 	return largura, altura, pixels
 
 
+def espelhar_horizontal(imagem):
+	largura, altura, pixels = imagem
+	resultado = []
+
+	for y in range(altura):
+		inicio = y * largura
+		fim = inicio + largura
+		linha = pixels[inicio:fim]
+		linha.reverse()
+		resultado.extend(linha)
+
+	return largura, altura, resultado
+
+
+def salvar_imagem(imagem, caminho):
+	largura, altura, pixels = imagem
+	imagem_saida = Image.new("L", (largura, altura))
+	imagem_saida.putdata(pixels)
+	imagem_saida.save(caminho)
+
+
 def imprimir(imagem, nome_operacao):
 	largura, altura, pixels = imagem
 	print(f"\nResultado da {nome_operacao} ({largura}x{altura} pixels):")
@@ -72,17 +65,28 @@ def imprimir(imagem, nome_operacao):
 
 def main():
 	parser = argparse.ArgumentParser(
-		description="Executa adicao e multiplicacao entre duas imagens PGM P2."
+		description="Executa adicao, multiplicacao e espelhamento entre imagens PNG."
 	)
-	parser.add_argument("imagem_a", help="Primeira imagem PGM")
-	parser.add_argument("imagem_b", help="Segunda imagem PGM")
+	parser.add_argument("imagem_a", help="Primeira imagem PNG")
+	parser.add_argument("imagem_b", help="Segunda imagem PNG")
 	argumentos = parser.parse_args()
 
 	try:
-		imagem_a = ler_pgm(argumentos.imagem_a)
-		imagem_b = ler_pgm(argumentos.imagem_b)
-		imprimir(adicionar(imagem_a, imagem_b), "adicao")
-		imprimir(multiplicar(imagem_a, imagem_b), "multiplicacao")
+		imagem_a = ler_imagem(argumentos.imagem_a)
+		imagem_b = ler_imagem(argumentos.imagem_b)
+
+		resultado_adicao = adicionar(imagem_a, imagem_b)
+		resultado_multiplicacao = multiplicar(imagem_a, imagem_b)
+		resultado_espelhamento = espelhar_horizontal(imagem_a)
+
+		imprimir(resultado_adicao, "adicao")
+		imprimir(resultado_multiplicacao, "multiplicacao")
+		imprimir(resultado_espelhamento, "espelhamento horizontal")
+
+		salvar_imagem(resultado_adicao, "results/resultado_adicao.png")
+		salvar_imagem(resultado_multiplicacao, "results/sresultado_multiplicacao.png")
+		salvar_imagem(resultado_espelhamento, "results/resultado_espelhamento.png")
+
 	except (OSError, ValueError) as erro:
 		parser.error(str(erro))
 
