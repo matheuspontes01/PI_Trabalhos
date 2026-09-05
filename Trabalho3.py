@@ -48,6 +48,11 @@ def espelhar_horizontal(imagem):
 
 	return largura, altura, resultado
 
+def negativo(imagem):
+	largura, altura, pixels = imagem
+	pixels = [MAX_PIXEL - pixel for pixel in pixels]
+	return largura, altura, pixels
+
 
 def salvar_imagem(imagem, caminho):
 	largura, altura, pixels = imagem
@@ -78,14 +83,17 @@ def main():
 		resultado_adicao = adicionar(imagem_a, imagem_b)
 		resultado_multiplicacao = multiplicar(imagem_a, imagem_b)
 		resultado_espelhamento = espelhar_horizontal(imagem_a)
+		resultado_negativo = negativo(imagem_a)
 
 		imprimir(resultado_adicao, "adicao")
 		imprimir(resultado_multiplicacao, "multiplicacao")
 		imprimir(resultado_espelhamento, "espelhamento horizontal")
+		imprimir(resultado_negativo, "negativo")
 
 		salvar_imagem(resultado_adicao, "results/resultado_adicao.png")
 		salvar_imagem(resultado_multiplicacao, "results/sresultado_multiplicacao.png")
 		salvar_imagem(resultado_espelhamento, "results/resultado_espelhamento.png")
+		salvar_imagem(resultado_negativo, "results/resultado_negativo.png")
 
 	except (OSError, ValueError) as erro:
 		parser.error(str(erro))
