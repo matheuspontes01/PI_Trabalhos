@@ -48,25 +48,22 @@ def multiplicar(imagem_a, imagem_b):
 
 # Inverte a ordem dos pixels de cada linha, espelhando a imagem horizontalmente.
 def espelhar_horizontal(imagem):
-	largura, altura, pixels = imagem
-	resultado = []
-
-	for y in range(altura):
-		inicio = y * largura
-		fim = inicio + largura
-		linha = pixels[inicio:fim]
-		linha.reverse()
-		resultado.extend(linha)
-
-	return largura, altura, resultado
-
+    largura, altura, pixels = imagem
+    resultado = []
+	
+    for y in range(altura):
+		#Faz o calculo do inicio da matriz
+        inicio = y * largura
+		#Percorremos a matriz de tras pra frente
+        for x in range(largura - 1, -1, -1):
+            resultado.append(pixels[inicio + x])
+    return largura, altura, resultado
 
 # Inverte a intensidade de cada pixel: preto vira branco e vice-versa.
 def negativo(imagem):
 	largura, altura, pixels = imagem
 	pixels = [MAX_PIXEL - pixel for pixel in pixels]
 	return largura, altura, pixels
-
 
 # Cria uma imagem em escala de cinza e grava os pixels no caminho informado.
 def salvar_imagem(imagem, caminho):
