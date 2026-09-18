@@ -62,6 +62,7 @@ def espelhar_horizontal(imagem):
 # Inverte a intensidade de cada pixel: preto vira branco e vice-versa.
 def negativo(imagem):
 	largura, altura, pixels = imagem
+	#Percorre todos os pixels e calcula 255 - o pixel .
 	pixels = [MAX_PIXEL - pixel for pixel in pixels]
 	return largura, altura, pixels
 
