@@ -3,11 +3,13 @@ import numpy as np
 
 
 def carregar_imagem(caminho):
+    # Abre a imagem, converte para tons de cinza e cria uma matriz de pixels.
     imagem = Image.open(caminho).convert("L")
     return np.array(imagem, dtype=np.float64)
 
 
 def salvar_imagem(matriz, caminho):
+    # Limita os pixels ao intervalo valido e salva a matriz como imagem.
     matriz = np.clip(matriz, 0, 255)
     matriz = matriz.astype(np.uint8)
 
@@ -15,6 +17,7 @@ def salvar_imagem(matriz, caminho):
 
 
 def normalizar(imagem):
+    # Ajusta os valores da imagem para o intervalo de 0 a 255.
     minimo = imagem.min()
     maximo = imagem.max()
 
@@ -25,9 +28,10 @@ def normalizar(imagem):
 
 
 def aplicar_mascara(imagem, mascara):
+    # Aplica uma mascara 3x3 em cada pixel e nos seus vizinhos.
     altura, largura = imagem.shape
 
-    # tratamento das bordas: padding com zeros
+    # Trata as bordas preenchendo os pixels externos com zeros.
     imagem_padding = np.pad(
         imagem,
         pad_width=1,
@@ -56,7 +60,7 @@ def aplicar_mascara(imagem, mascara):
 
 
 def filtro_media(imagem):
-
+    # Calcula a media dos pixels vizinhos para suavizar a imagem.
     mascara = np.array([
         [1/9, 1/9, 1/9],
         [1/9, 1/9, 1/9],
@@ -67,7 +71,7 @@ def filtro_media(imagem):
 
 
 def filtro_sobel(imagem):
-
+    # Detecta bordas nas direcoes horizontal e vertical.
     sobel_x = np.array([
         [-1, -2, -1],
         [ 0,  0,  0],
@@ -83,6 +87,7 @@ def filtro_sobel(imagem):
     gx = aplicar_mascara(imagem, sobel_x)
     gy = aplicar_mascara(imagem, sobel_y)
 
+    # Combina as duas direcoes para calcular a intensidade das bordas.
     magnitude = np.sqrt(gx**2 + gy**2)
 
     return normalizar(magnitude)
