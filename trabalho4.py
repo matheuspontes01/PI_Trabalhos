@@ -58,7 +58,7 @@ def aplicar_mascara(imagem, mascara):
 
     return resultado
 
-
+#Aplica um filtro de suavizacao para a imagem reduzindo os ruidos.
 def filtro_media(imagem):
     # Calcula a media dos pixels vizinhos para suavizar a imagem.
     mascara = np.array([
@@ -69,7 +69,7 @@ def filtro_media(imagem):
 
     return aplicar_mascara(imagem, mascara)
 
-
+#Cria duas mascaras ,uma para detectar variacoes verticais e outra horizontais
 def filtro_sobel(imagem):
     # Detecta bordas nas direcoes horizontal e vertical.
     sobel_x = np.array([
