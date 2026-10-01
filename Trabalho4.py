@@ -267,9 +267,6 @@ def main():
         )
 
 
-        imprimir(resultado)
-
-
         salvar_imagem(
             resultado,
             "results/imagem_equalizada.png"
