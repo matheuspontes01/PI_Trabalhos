@@ -14,7 +14,9 @@ python Trabalho4.py testes/images.png
 
 
 import argparse
+import os
 from PIL import Image
+import matplotlib.pyplot as plt
 
 
 MAX_PIXEL = 255
@@ -144,6 +146,33 @@ def salvar_imagem(imagem, caminho):
     imagem_saida.save(caminho)
 
 
+# Salva os histogramas original e equalizado em um unico grafico.
+def salvar_grafico_comparativo(histograma_original, histograma_equalizado, caminho):
+
+    niveis = range(MAX_PIXEL + 1)
+
+    figura, eixos = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
+
+    eixos[0].bar(niveis, histograma_original, color="steelblue", width=1)
+    eixos[0].set_title("Imagem original")
+    eixos[0].set_xlabel("Nivel de cinza")
+    eixos[0].set_ylabel("Quantidade de pixels")
+
+    eixos[1].bar(niveis, histograma_equalizado, color="seagreen", width=1)
+    eixos[1].set_title("Imagem equalizada")
+    eixos[1].set_xlabel("Nivel de cinza")
+
+    for eixo in eixos:
+        eixo.set_xlim(0, MAX_PIXEL)
+        eixo.grid(True, alpha=0.3)
+
+    figura.suptitle("Comparacao dos histogramas")
+    figura.tight_layout()
+    figura.savefig(caminho, dpi=150)
+    plt.close(figura)
+    plt.close()
+
+
 
 # Mostra a matriz de pixels
 def imprimir(imagem):
@@ -223,6 +252,18 @@ def main():
         resultado = aplicar_lut(
             imagem,
             lut
+        )
+
+        os.makedirs("results", exist_ok=True)
+
+        histograma_equalizado = calcular_histograma(
+            resultado
+        )
+
+        salvar_grafico_comparativo(
+            histograma,
+            histograma_equalizado,
+            "results/comparacao_histogramas.png"
         )
 
 
