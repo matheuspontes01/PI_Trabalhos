@@ -1,3 +1,31 @@
+r"""
+GUIA DE EXECUCAO - WINDOWS / POWERSHELL
+
+1. Abra o PowerShell e entre na pasta do trabalho:
+    cd "C:\Users\canal\OneDrive\Documentos\pi\PI_Trabalhos"
+
+2. Instale as bibliotecas necessarias:
+    python -m pip install -r requirements.txt
+
+3. Verifique a sintaxe do programa:
+    python -m py_compile Trabalho5.py
+
+4. Execute a implementacao:
+    python Trabalho5.py
+
+O programa espera encontrar a imagem de entrada em:
+    testes/images2.png
+
+Os resultados serao salvos na pasta:
+    results/
+
+Entre eles estara comparacao_laplaciano.png, que organiza os quatro
+resultados Laplacianos em uma imagem 2x2.
+
+Observacao: Python e uma linguagem interpretada. O comando py_compile
+verifica a sintaxe, mas a execucao e feita pelo comando python Trabalho5.py.
+"""
+
 from PIL import Image
 import numpy as np
 
@@ -57,6 +85,22 @@ def aplicar_mascara(imagem, mascara):
             resultado[y, x] = soma
 
     return resultado
+
+
+def comparar_resultados(resultados, caminho):
+    # Organiza os quatro resultados em uma montagem 2x2 para comparacao visual.
+    primeira_linha = np.hstack((resultados[0], resultados[1]))
+    segunda_linha = np.hstack((resultados[2], resultados[3]))
+    comparacao = np.vstack((primeira_linha, segunda_linha))
+
+    salvar_imagem(comparacao, caminho)
+
+    # Mostra uma medida simples da intensidade media de cada resultado.
+    for i, resultado in enumerate(resultados, start=1):
+        print(
+            f"Laplaciano {i}: media={resultado.mean():.2f}, "
+            f"maximo={resultado.max():.2f}"
+        )
 
 #Aplica um filtro de suavizacao para a imagem reduzindo os ruidos.
 def filtro_media(imagem):
@@ -144,6 +188,8 @@ mascaras_laplaciano = [
 ]
 
 
+resultados_laplaciano = []
+
 for i, mascara in enumerate(mascaras_laplaciano):
 
     resultado = aplicar_mascara(
@@ -152,11 +198,19 @@ for i, mascara in enumerate(mascaras_laplaciano):
     )
 
     resultado = normalizar(resultado)
+    resultados_laplaciano.append(resultado)
 
     salvar_imagem(
         resultado,
         f"results/laplaciano_{i + 1}.png"
     )
+
+
+# Junta os quatro resultados para facilitar a comparacao visual.
+comparar_resultados(
+    resultados_laplaciano,
+    "results/comparacao_laplaciano.png"
+)
 
 
 # -------------------------
