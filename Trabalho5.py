@@ -1,9 +1,8 @@
 r"""
 GUIA DE EXECUCAO - WINDOWS / POWERSHELL
 
-1. Abra o PowerShell e entre na pasta onde este arquivo foi baixado/extraido
-   (substitua pelo caminho real na sua maquina):
-    cd "CAMINHO\PARA\PI_Trabalhos"
+1. Abra o PowerShell e entre na pasta do trabalho:
+    cd "C:\Users\canal\OneDrive\Documentos\pi\PI_Trabalhos"
 
 2. Instale as bibliotecas necessarias:
     python -m pip install -r requirements.txt
@@ -14,7 +13,7 @@ GUIA DE EXECUCAO - WINDOWS / POWERSHELL
 4. Execute a implementacao:
     python Trabalho5.py
 
-A imagem de entrada deve estar em testes/images2.png, dentro da mesma pasta.
+A imagem de entrada deve estar em testes/images2.png.
 Os resultados serao salvos na pasta results/.
 """
 
@@ -134,15 +133,15 @@ def filtro_media(imagem):
 def filtro_sobel(imagem):
     # Calcula as derivadas em x e y e a magnitude do gradiente.
     sobel_x = np.array([
-        [-1, 0, 1],
-        [-2, 0, 2],
-        [-1, 0, 1]
-    ])
-
-    sobel_y = np.array([
         [-1, -2, -1],
         [ 0,  0,  0],
         [ 1,  2,  1]
+    ])
+
+    sobel_y = np.array([
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
     ])
 
     gx = aplicar_mascara(imagem, sobel_x)
@@ -189,7 +188,6 @@ mascaras_laplaciano = [
 respostas_laplaciano = []
 resultados_zero = []
 resultados_escala = []
-resultados_realce = []
 
 for i, mascara in enumerate(mascaras_laplaciano):
 
@@ -204,17 +202,8 @@ for i, mascara in enumerate(mascaras_laplaciano):
     resultados_escala.append(resultado_escala)
     salvar_imagem(resultado_escala, f"results/laplaciano_{i + 1}_escala.png")
 
-    if mascara[1, 1] < 0:
-        realce = imagem - resposta
-    else:
-        realce = imagem + resposta
-
-    resultados_realce.append(realce)
-    salvar_imagem(realce, f"results/laplaciano_{i + 1}_realce.png")
-
 montar_comparacao(resultados_zero, "results/comparacao_laplaciano_zero.png")
 montar_comparacao(resultados_escala, "results/comparacao_laplaciano_escala.png")
-montar_comparacao(resultados_realce, "results/comparacao_laplaciano_realce.png")
 
 comparar_resultados(respostas_laplaciano)
 
