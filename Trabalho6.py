@@ -20,12 +20,15 @@ Opcoes escolhidas (Aula 11 - Morfologia Matematica):
 As imagens de entrada sao os exemplos da Aula 11, salvos em testes/:
     morfologia_texto.png   (exemplo pratico de erosao e dilatacao)
     morfologia_digital.png (impressao digital com ruido)
-Os resultados serao salvos na pasta results/.
+Os resultados serao salvos na pasta results/ e exibidos em uma janela
+(use os botoes ou as setas do teclado para trocar de operacao).
 """
 
 import os
 
 from PIL import Image
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 import numpy as np
 
 
@@ -128,6 +131,63 @@ def comparar_com_slide(resultado, caminho_slide, nome):
     print(f"{nome}: {diferencas} pixels diferentes do slide")
 
 
+def mostrar_interface(comparacoes):
+    # Janela com "Antes" e "Depois" lado a lado. Os botoes (ou as setas
+    # do teclado) trocam a operacao exibida.
+    figura, (eixo_antes, eixo_depois) = plt.subplots(1, 2, figsize=(12, 6))
+    figura.subplots_adjust(bottom=0.15)
+    pagina = {"atual": 0}
+
+    def desenhar():
+        titulo, antes, depois = comparacoes[pagina["atual"]]
+
+        # Imagens largas (como o texto) ficam uma acima da outra.
+        altura, largura = antes.shape
+        if largura > 2 * altura:
+            eixo_antes.set_position([0.05, 0.55, 0.9, 0.33])
+            eixo_depois.set_position([0.05, 0.15, 0.9, 0.33])
+        else:
+            eixo_antes.set_position([0.03, 0.15, 0.45, 0.73])
+            eixo_depois.set_position([0.52, 0.15, 0.45, 0.73])
+
+        for eixo, imagem, nome in (
+            (eixo_antes, antes, "Antes"),
+            (eixo_depois, depois, "Depois"),
+        ):
+            eixo.clear()
+            eixo.imshow(imagem, cmap="gray", vmin=0, vmax=1,
+                        interpolation="nearest")
+            eixo.set_title(nome)
+            eixo.axis("off")
+
+        figura.suptitle(
+            f"{titulo}   ({pagina['atual'] + 1}/{len(comparacoes)})",
+            fontsize=14
+        )
+        figura.canvas.draw_idle()
+
+    def mudar(passo):
+        pagina["atual"] = (pagina["atual"] + passo) % len(comparacoes)
+        desenhar()
+
+    def tecla(evento):
+        if evento.key == "right":
+            mudar(1)
+        elif evento.key == "left":
+            mudar(-1)
+
+    botao_anterior = Button(figura.add_axes([0.3, 0.03, 0.15, 0.07]),
+                            "< Anterior")
+    botao_proximo = Button(figura.add_axes([0.55, 0.03, 0.15, 0.07]),
+                           "Proximo >")
+    botao_anterior.on_clicked(lambda _: mudar(-1))
+    botao_proximo.on_clicked(lambda _: mudar(1))
+    figura.canvas.mpl_connect("key_press_event", tecla)
+
+    desenhar()
+    plt.show()
+
+
 def elemento_quadrado(tamanho):
     # Elemento estruturante quadrado cheio de 1s.
     return np.ones((tamanho, tamanho), dtype=np.uint8)
@@ -202,3 +262,13 @@ print(f"  dilatacao: {digital_dilatada.sum()}")
 print(f"  contorno:  {digital_contorno_8.sum()}")
 
 print("\nResultados salvos na pasta results/")
+
+mostrar_interface([
+    ("Texto - Erosao (5x5)", texto, texto_erodido),
+    ("Texto - Dilatacao (5x5)", texto, texto_dilatado),
+    ("Texto - Extracao de contorno (3x3)", texto, texto_contorno),
+    ("Impressao digital - Erosao (3x3)", digital, digital_erodida),
+    ("Impressao digital - Dilatacao (3x3)", digital, digital_dilatada),
+    ("Impressao digital - Contorno (8-conexo)", digital, digital_contorno_8),
+    ("Impressao digital - Contorno (4-conexo)", digital, digital_contorno_4),
+])
